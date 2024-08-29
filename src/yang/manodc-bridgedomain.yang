@@ -1,0 +1,195 @@
+submodule manodc-bridgedomain {
+
+  belongs-to manodc {
+    prefix "manodc";
+  }
+
+  yang-version 1.1;
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  import tailf-common {
+    prefix tailf;
+  }
+
+  import tailf-ncs {
+    prefix ncs;
+  }
+
+  include manodc-types {
+    revision-date "2024-08-22";
+  }
+
+  description
+    "Turkcell MANO DC bridge-domain module.";
+
+  revision 2024-08-22 {
+    description
+      "Initial revision.";
+  }
+
+  grouping bridge-domain-vlan {
+    leaf name {
+      tailf:info "Bridge domain name";
+      type string;
+    }
+
+    leaf vlan {
+      tailf:info "Vlan id";
+      type vlan-id;
+    }
+
+    list switch {
+      tailf:info "Vlan endpoint";
+      key name;
+
+      leaf name {
+        tailf:info "Endpoint name";
+        type leafref {
+          path "/ncs:devices/ncs:device/ncs:name";
+        }
+      }
+
+      leaf switch-type {
+        tailf:info "Switch can be eor or tor";
+        type switch-type;
+        default tor;
+      }
+
+      list port {
+        when "../switch-type = 'tor'";
+        tailf:info "Switch port";
+        key id;
+
+        leaf id {
+          tailf:info "Port id";
+          type tor-port;
+        }
+
+        leaf mode {
+          tailf:info "Port mode";
+          type vlan-mode;
+          default trunk;
+        }
+      }
+    }
+
+    container layer3 {
+      when "count(../switch[switch-type='eor'])=2";
+      presence
+        "Enable layer 3 network configuration";
+      tailf:info "Layer 3 network configuration";
+
+      leaf vrf {
+        tailf:info "VRF name";
+        type string;
+      }
+
+      leaf gateway {
+        tailf:info "SVI gateway";
+        mandatory true;
+        type tailf:ip-address-and-prefix-length;
+      }
+    }
+  }
+
+  grouping bridge-domain-vlan-data {
+    leaf name {
+      tailf:info "Bridge domain name";
+      type string;
+    }
+
+    leaf vlan {
+      tailf:info "Vlan id";
+      type vlan-id;
+    }
+  }
+
+  grouping bridge-domain-vlan-switch-data {
+    leaf name {
+      tailf:info "Bridge domain name";
+      type string;
+    }
+
+    leaf vlan {
+      tailf:info "Vlan id";
+      type vlan-id;
+    }
+
+    leaf switch {
+      tailf:info "Vlan endpoint";
+      type leafref {
+        path "/ncs:devices/ncs:device/ncs:name";
+      }
+    }
+  }
+
+  grouping bridge-domain-vlan-switch {
+    leaf name {
+      tailf:info "Bridge domain name";
+      type string;
+    }
+
+    leaf vlan {
+      tailf:info "Vlan id";
+      type vlan-id;
+    }
+
+    leaf switch {
+      tailf:info "Vlan endpoint";
+      type leafref {
+        path "/ncs:devices/ncs:device/ncs:name";
+      }
+    }
+
+    list port {
+      tailf:info "Switch port";
+      key id;
+
+      leaf id {
+        tailf:info "Port id";
+        type tor-port;
+      }
+
+      leaf mode {
+        tailf:info "Port mode";
+        type vlan-mode;
+        default trunk;
+      }
+    }
+
+    container layer3 {
+      presence
+        "Enable layer 3 network configuration";
+      tailf:info "Layer 3 network configuration";
+
+      leaf vrf {
+        tailf:info "VRF name";
+        type string;
+      }
+
+      leaf address {
+        tailf:info "SVI IP address";
+        mandatory true;
+        type tailf:ip-address-and-prefix-length;
+      }
+
+      leaf vip-address {
+        tailf:info "Virtual IP address";
+        type tailf:ip-address-and-prefix-length;
+      }
+
+      leaf vrrpv3-id {
+        tailf:info "VRRP group id";
+        type uint8;
+      }
+
+      leaf vrrpv3-priority {
+        tailf:info "VRRP priority";
+        type uint8;
+      }
+    }
+  }
+}

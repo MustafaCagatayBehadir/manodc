@@ -1,0 +1,116 @@
+module manodc {
+
+  yang-version 1.1;
+  namespace "http://turkcell.com/manodc";
+  prefix manodc;
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  import tailf-common {
+    prefix tailf;
+  }
+
+  import tailf-ncs {
+    prefix ncs;
+  }
+
+  include manodc-types {
+    revision-date "2024-08-22";
+  }
+
+  include manodc-site {
+    revision-date 2024-08-21;
+  }
+
+  include manodc-nano-services {
+    revision-date "2024-08-22";
+  }
+
+  include manodc-bridgedomain {
+    revision-date 2024-08-22;
+  }
+
+  description
+    "Turkcell MANO DC service package.";
+
+  revision 2024-08-21 {
+    description
+      "Initial revision.";
+  }
+
+  container dc-sites {
+    tailf:info "Data center sites configuration";
+
+    list dc-site {
+      tailf:info "Data center site configuration";
+
+      key fabric;
+
+      uses site-configs;
+
+      container bridge-domains {
+        tailf:info "Bridge domains configuration";
+
+        list bridge-domain-vlan-data {
+          tailf:info "Bridge domain vlan data configuration";
+          config false;
+          tailf:cdb-oper {
+            tailf:persistent true;
+          }
+
+          uses ncs:nano-plan-data;
+          // uses ncs:nano-plan-history;
+
+          key "name vlan";
+
+          uses bridge-domain-vlan-data;
+        }
+
+        list bridge-domain-vlan {
+          tailf:info "Bridge domain configuration";
+
+          // uses ncs:nano-plan-data;
+          // uses ncs:nano-plan-history;
+
+          uses ncs:service-data;
+          ncs:servicepoint bridge-domain-vlan-servicepoint;
+
+          key "name vlan";
+
+          uses bridge-domain-vlan;
+        }
+
+        list bridge-domain-vlan-switch-data {
+          tailf:info "Bridge domain vlan switch data configuration";
+          config false;
+          tailf:cdb-oper {
+            tailf:persistent true;
+          }
+
+          uses ncs:nano-plan-data;
+          // uses ncs:nano-plan-history;
+
+          key "name vlan switch";
+
+          uses bridge-domain-vlan-switch-data;
+        }
+
+        list bridge-domain-vlan-switch {
+          tailf:info "Bridge domain vlan switch configuration";
+
+          // uses ncs:nano-plan-data;
+          // uses ncs:nano-plan-history;
+
+          uses ncs:service-data;
+          ncs:servicepoint bridge-domain-vlan-switch-servicepoint;
+
+          key "name vlan switch";
+
+          uses bridge-domain-vlan-switch;
+        }
+      }
+    }
+  }
+}

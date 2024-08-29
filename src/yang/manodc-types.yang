@@ -1,0 +1,71 @@
+submodule manodc-types {
+  belongs-to manodc {
+    prefix "manodc";
+  }
+
+  yang-version 1.1;
+
+  import tailf-common {
+    prefix tailf;
+  }
+  import tailf-ncs {
+    prefix ncs;
+  }
+
+  description
+    "Turkcell MANO DC common types module.";
+
+  revision 2024-08-22 {
+    description
+      "Initial revision.";
+  }
+
+  typedef switch-type {
+    type enumeration {
+      enum eor {
+        value 1;
+      }
+      enum tor {
+        value 2;
+      }
+    }
+  }
+
+  typedef eor-role {
+    type enumeration {
+      enum primary {
+        value 1;
+      }
+      enum secondary {
+        value 2;
+      }
+    }
+  }
+
+  typedef tor-port {
+    type string {
+      pattern
+        '[1-9]/[1-9][0-9]{0,1}';
+    }
+  }
+
+  typedef vlan-id {
+    type uint16 {
+      range "1..4094";
+    }
+  }
+
+  typedef vlan-mode {
+    type enumeration {
+      enum trunk {
+        value 1;
+      }
+      enum access {
+        value 2;
+      }
+      enum native {
+        value 3;
+      }
+    }
+  }
+}

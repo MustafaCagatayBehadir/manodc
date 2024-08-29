@@ -1,0 +1,15 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+    <devices xmlns="http://tail-f.com/ns/ncs">
+        <device>
+            <name>{switch}</name>
+            <config>
+                <vlan xmlns="urn:ios">
+                    <vlan-list>
+                        <id>{vlan}</id>
+                        <name>{name}::VLAN{vlan}</name>
+                    </vlan-list>
+                </vlan>
+            </config>
+        </device>
+    </devices>
+</config-template>

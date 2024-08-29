@@ -1,0 +1,130 @@
+submodule manodc-site {
+
+  belongs-to manodc {
+    prefix "manodc";
+  }
+
+  yang-version 1.1;
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  import tailf-common {
+    prefix tailf;
+  }
+
+  import tailf-ncs {
+    prefix ncs;
+  }
+
+  import resource-allocator {
+    prefix ralloc;
+  }
+
+  import id-allocator {
+    prefix idalloc;
+  }
+
+  include manodc-types {
+    revision-date "2024-08-22";
+  }
+
+  description
+    "Turkcell MANO DC inventory module.";
+
+  revision 2024-08-21 {
+    description
+      "Initial revision.";
+  }
+
+  grouping site-configs {
+    leaf fabric {
+      tailf:info "Data center fabric name";
+      type string;
+    }
+
+    list eor {
+      tailf:info "End of row switch";
+
+      key name;
+
+      min-elements 2;
+      max-elements 2;
+
+      leaf name {
+        tailf:info "End of row switch name";
+        type leafref {
+          path "/ncs:devices/ncs:device/ncs:name";
+        }
+      }
+
+      leaf role {
+        tailf:info "End of row switch role";
+        type eor-role;
+        mandatory true;
+      }
+    }
+
+    list tor {
+      tailf:info "Top of rack switch";
+
+      key name;
+
+      leaf name {
+        tailf:info "Top of rack switch name";
+        type leafref {
+          path "/ncs:devices/ncs:device/ncs:name";
+        }
+      }
+    }
+
+    list tor-group {
+      tailf:info "Top of rack switch group";
+
+      key name;
+
+      leaf name {
+        tailf:info "Top of rack switch group name";
+        type string;
+      }
+
+      leaf tor-1 {
+        tailf:info "Top of rack switch 1";
+        type leafref {
+          path "/ncs:devices/ncs:device/ncs:name";
+        }
+        mandatory true;
+      }
+
+      leaf tor-2 {
+        tailf:info "Top of rack switch 2";
+        type leafref {
+          path "/ncs:devices/ncs:device/ncs:name";
+        }
+        mandatory true;
+      }
+    }
+
+    container resource-pools {
+      tailf:info "Resource pools configuration";
+      tailf:cli-add-mode;
+
+      leaf vlan-id-pool {
+        tailf:info "Vlan pool";
+        type leafref {
+          path "/ralloc:resource-pools/idalloc:id-pool/idalloc:name";
+        }
+        mandatory true;
+      }
+
+      leaf vrrpv3-id-pool {
+        tailf:info "VRRPv3 id pool";
+        type leafref {
+          path "/ralloc:resource-pools/idalloc:id-pool/idalloc:name";
+        }
+        mandatory true;
+      }
+    }
+  }
+}
