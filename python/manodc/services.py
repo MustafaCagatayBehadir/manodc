@@ -28,14 +28,6 @@ def read_allocated_id(root: ncs.maagic.Root, pool: str, allocation_name: str, lo
     return allocated_id
 
 
-def nested_getattr(obj, attr_path):
-    """Get attribute from nested object"""
-    attrs = attr_path.split(".")
-    for attr in attrs:
-        obj = getattr(obj, attr)
-    return obj
-
-
 def allocate_vlan_id(root: ncs.maagic.Root, bdvlan: ncs.maagic.ListElement, pool: str, xpath: str, log: ncs.log.Log):
     """Allocate fabric vlan id."""
     vlan_id = bdvlan.vlan
@@ -104,19 +96,17 @@ class BdVlanServiceCallback(ncs.application.NanoService):
     def allocate_ids(self, root: ncs.maagic.Root, bdvlan: ncs.maagic.ListElement,
                      _proplist: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
         """Allocate resource-manager ids for the bridge-domain vlan service."""
-        site = nested_getattr(bdvlan, "_parent._parent._parent")
-        fabric = site.manodc__fabric
-        vlan_pool = site.manodc__resource_pools.vlan_id_pool
-        vrrpv3_pool = site.manodc__resource_pools.vrrpv3_id_pool
+        fabric = bdvlan.fabric
         bd_name = bdvlan.name
         vlan_id = bdvlan.vlan
-        vlan_xpath = f"/dc-sites/dc-site[fabric='{fabric}']/bridge-domains" \
-            + f"/bridge-domain-vlan[name='{bd_name}'][vlan='{vlan_id}']"
-        allocated_vlan_id = allocate_vlan_id(root, bdvlan, vlan_pool, vlan_xpath, self.log)
-        _proplist.append(("fabric", fabric))
+        site = root.manodc__dc_sites.dc_site[fabric]
+        vlan_pool = site.manodc__resource_pools.vlan_id_pool
+        vrrpv3_pool = site.manodc__resource_pools.vrrpv3_id_pool
+        bdvlan_xpath = f"/bridge-domains/bridge-domain-vlan[fabric='{fabric}'][name='{bd_name}'][vlan='{vlan_id}']"
+        allocated_vlan_id = allocate_vlan_id(root, bdvlan, vlan_pool, bdvlan_xpath, self.log)
         _proplist.append(("vlan_id", allocated_vlan_id))
         if bdvlan.layer3.exists():
-            allocated_vrrpv3_id = allocate_vrrpv3_id(root, bdvlan, vrrpv3_pool, vlan_xpath, self.log)
+            allocated_vrrpv3_id = allocate_vrrpv3_id(root, bdvlan, vrrpv3_pool, bdvlan_xpath, self.log)
             _proplist.append(("vrrpv3_id", allocated_vrrpv3_id))
         else:
             _proplist.append(("vrrpv3_id", "-1"))
@@ -125,15 +115,10 @@ class BdVlanServiceCallback(ncs.application.NanoService):
     def configure_bdvlan_switch(self, root: ncs.maagic.Root, bdvlan: ncs.maagic.ListElement,
                                 proplist: List[Tuple[str, str]], device: str) -> None:
         """Configure vlan-switch list."""
-        fabric = proplist[0][1]
-        vlan_id = proplist[1][1]
-        vrrpv3_id = proplist[2][1]
-        bd_name = bdvlan.name
+        vrrpv3_id = proplist[1][1]
+        fabric = bdvlan.fabric
         template = ncs.template.Template(bdvlan)
         tvars = ncs.template.Variables()
-        tvars.add("FABRIC", fabric)
-        tvars.add("BD", bd_name)
-        tvars.add("VLAN_ID", vlan_id)
         tvars.add("SWITCH", device)
         if is_switch_eor(bdvlan, device):
             gateway = bdvlan.layer3.gateway

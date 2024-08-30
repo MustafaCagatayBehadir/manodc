@@ -1,24 +1,20 @@
 <config xmlns="http://tail-f.com/ns/config/1.0">
-  <dc-sites xmlns="http://turkcell.com/manodc">
-    <dc-site>
-      <fabric>{$FABRIC}</fabric>
-      <bridge-domains>
-        <bridge-domain-vlan-switch>
-          <name>{$BD}</name>
-          <vlan>{$VLAN_ID}</vlan>
-          <switch>{$SWITCH}</switch>
-          <?copy-tree {switch[name=$SWITCH]}?>
-          <?if {switch[name=$SWITCH]/switch-type = 'eor'}?>
-            <layer3>
-              <vrf>{layer3/vrf}</vrf>
-              <address>{$ADDRESS}</address>
-              <vip-address>{layer3/gateway}</vip-address>
-              <vrrpv3-id>{$VRRPV3_ID}</vrrpv3-id>
-              <vrrpv3-priority>{$VRRPV3_PRIORITY}</vrrpv3-priority>
-            </layer3>
-          <?end?><!--if {switch[name=$SWITCH]/switch-type = 'eor'}-->
-        </bridge-domain-vlan-switch>
-      </bridge-domains>
-    </dc-site>
-  </dc-sites>
+  <bridge-domains xmlns="http://turkcell.com/manodc">
+    <bridge-domain-vlan-switch>
+      <fabric>{fabric}</fabric>
+      <name>{name}</name>
+      <vlan>{vlan}</vlan>
+      <switch>{$SWITCH}</switch>
+      <?copy-tree {switch[name=$SWITCH]}?>
+      <?if {switch[name=$SWITCH]/switch-type = 'eor'}?>
+        <layer3>
+          <vrf>{layer3/vrf}</vrf>
+          <address>{$ADDRESS}</address>
+          <vip-address>{layer3/gateway}</vip-address>
+          <vrrpv3-id>{$VRRPV3_ID}</vrrpv3-id>
+          <vrrpv3-priority>{$VRRPV3_PRIORITY}</vrrpv3-priority>
+        </layer3>
+      <?end?><!--if {switch[name=$SWITCH]/switch-type = 'eor'}-->
+    </bridge-domain-vlan-switch>
+  </bridge-domains>
 </config>

@@ -24,10 +24,6 @@ module manodc {
     revision-date 2024-08-21;
   }
 
-  include manodc-nano-services {
-    revision-date "2024-08-22";
-  }
-
   include manodc-bridgedomain {
     revision-date 2024-08-22;
   }
@@ -40,6 +36,127 @@ module manodc {
       "Initial revision.";
   }
 
+  identity vlan-endpoint {
+    base ncs:plan-component-type;
+  }
+
+  identity id-allocated {
+    base ncs:plan-state;
+  }
+
+  identity vlan-configured {
+    base ncs:plan-state;
+  }
+
+  identity vlan-switch-configured {
+    base ncs:plan-state;
+  }
+
+  ncs:plan-outline bridge-domain-vlan-nano-plan {
+    description
+      "Manodc vlan service plan.";
+
+    ncs:self-as-service-status;
+
+    ncs:component-type "ncs:self" {
+      ncs:state "ncs:init";
+
+      ncs:state "manodc:id-allocated" {
+        ncs:create {
+          ncs:nano-callback;
+        }
+      }
+
+      ncs:state "ncs:ready";
+    }
+
+    ncs:component-type "manodc:vlan-endpoint" {
+      ncs:state "ncs:init" {
+        ncs:delete {
+          ncs:pre-condition {
+            ncs:monitor "/manodc:bridge-domains/manodc:bridge-domain-vlan-switch-data[manodc:fabric=$FABRIC][manodc:name=$BD_NAME][manodc:vlan=$VLAN][manodc:switch=$SWITCH]" {
+              ncs:trigger-on-delete;
+            }
+          }
+        }
+      }
+
+      ncs:state "manodc:vlan-configured" {
+        ncs:create {
+          ncs:pre-condition {
+            ncs:monitor  "/manodc:bridge-domains/manodc:bridge-domain-vlan-data[manodc:fabric=$FABRIC][manodc:name=$BD_NAME][manodc:vlan=$VLAN]/plan/component[type='ncs:self'][name='self']/state[name='manodc:id-allocated']" {
+              ncs:trigger-expr "status = 'reached'";
+            }
+          }
+          ncs:nano-callback;
+        }
+      }
+
+      ncs:state "ncs:ready";
+    }
+  }
+
+  ncs:service-behavior-tree bridge-domain-vlan-servicepoint {
+    description
+      "Vlan service behavior tree.";
+    ncs:plan-outline-ref "bridge-domain-vlan-nano-plan";
+    ncs:plan-location "/manodc:bridge-domains/manodc:bridge-domain-vlan-data";
+    ncs:selector {
+      ncs:create-component "'self'" {
+        ncs:component-type-ref "ncs:self";
+      }
+
+      ncs:variable "FABRIC" {
+        ncs:value-expr "fabric";
+      }
+      ncs:variable "BD_NAME" {
+        ncs:value-expr "name";
+      }
+      ncs:variable "VLAN" {
+        ncs:value-expr "vlan";
+      }
+
+      ncs:multiplier {
+        ncs:foreach "switch" {
+          ncs:variable "SWITCH" {
+            ncs:value-expr "name";
+          }
+          ncs:create-component "name" {
+            ncs:component-type-ref "manodc:vlan-endpoint";
+          }
+        }
+      }
+    }
+  }
+
+  ncs:plan-outline bridge-domain-vlan-switch-nano-plan {
+    description
+      "Manodc vlan switch service plan.";
+
+    ncs:component-type "ncs:self" {
+      ncs:state "ncs:init";
+
+      ncs:state "manodc:vlan-switch-configured" {
+        ncs:create {
+          ncs:nano-callback;
+        }
+      }
+
+      ncs:state "ncs:ready";
+    }
+  }
+
+  ncs:service-behavior-tree bridge-domain-vlan-switch-servicepoint {
+    ncs:converge-on-re-deploy;
+    ncs:plan-outline-ref "bridge-domain-vlan-switch-nano-plan";
+    ncs:plan-location "/manodc:bridge-domains/manodc:bridge-domain-vlan-switch-data";
+    ncs:selector {
+      ncs:create-component "'self'" {
+        ncs:component-type-ref "ncs:self";
+      }
+    }
+  }
+
   container dc-sites {
     tailf:info "Data center sites configuration";
 
@@ -49,68 +166,63 @@ module manodc {
       key fabric;
 
       uses site-configs;
+    }
+  }
 
-      container bridge-domains {
-        tailf:info "Bridge domains configuration";
+  container bridge-domains {
 
-        list bridge-domain-vlan-data {
-          tailf:info "Bridge domain vlan data configuration";
-          config false;
-          tailf:cdb-oper {
-            tailf:persistent true;
-          }
+    tailf:info "Bridge domains configuration";
 
-          uses ncs:nano-plan-data;
-          // uses ncs:nano-plan-history;
-
-          key "name vlan";
-
-          uses bridge-domain-vlan-data;
-        }
-
-        list bridge-domain-vlan {
-          tailf:info "Bridge domain configuration";
-
-          // uses ncs:nano-plan-data;
-          // uses ncs:nano-plan-history;
-
-          uses ncs:service-data;
-          ncs:servicepoint bridge-domain-vlan-servicepoint;
-
-          key "name vlan";
-
-          uses bridge-domain-vlan;
-        }
-
-        list bridge-domain-vlan-switch-data {
-          tailf:info "Bridge domain vlan switch data configuration";
-          config false;
-          tailf:cdb-oper {
-            tailf:persistent true;
-          }
-
-          uses ncs:nano-plan-data;
-          // uses ncs:nano-plan-history;
-
-          key "name vlan switch";
-
-          uses bridge-domain-vlan-switch-data;
-        }
-
-        list bridge-domain-vlan-switch {
-          tailf:info "Bridge domain vlan switch configuration";
-
-          // uses ncs:nano-plan-data;
-          // uses ncs:nano-plan-history;
-
-          uses ncs:service-data;
-          ncs:servicepoint bridge-domain-vlan-switch-servicepoint;
-
-          key "name vlan switch";
-
-          uses bridge-domain-vlan-switch;
-        }
+    list bridge-domain-vlan-data {
+      tailf:info "Bridge domain vlan data configuration";
+      config false;
+      tailf:cdb-oper {
+        tailf:persistent true;
       }
+
+      uses ncs:nano-plan-data;
+      uses ncs:nano-plan-history;
+
+      key "fabric name vlan";
+
+      uses bridge-domain-vlan-data;
+    }
+
+    list bridge-domain-vlan {
+      tailf:info "Bridge domain configuration";
+
+      uses ncs:service-data;
+      ncs:servicepoint bridge-domain-vlan-servicepoint;
+
+      key "fabric name vlan";
+
+      uses bridge-domain-vlan;
+    }
+
+    list bridge-domain-vlan-switch-data {
+      tailf:info "Bridge domain vlan switch data configuration";
+      config false;
+      tailf:cdb-oper {
+        tailf:persistent true;
+      }
+
+      uses ncs:nano-plan-data;
+      uses ncs:nano-plan-history;
+
+      key "fabric name vlan switch";
+
+      uses bridge-domain-vlan-switch-data;
+    }
+
+    list bridge-domain-vlan-switch {
+      tailf:info "Bridge domain vlan switch configuration";
+
+      uses ncs:service-data;
+      ncs:servicepoint bridge-domain-vlan-switch-servicepoint;
+
+      key "fabric name vlan switch";
+
+      uses bridge-domain-vlan-switch;
     }
   }
 }

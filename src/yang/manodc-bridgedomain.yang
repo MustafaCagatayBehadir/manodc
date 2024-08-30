@@ -31,6 +31,13 @@ submodule manodc-bridgedomain {
   }
 
   grouping bridge-domain-vlan {
+    leaf fabric {
+      tailf:info "Data center fabric name";
+      type leafref {
+        path "/manodc:dc-sites/manodc:dc-site/manodc:fabric";
+      }
+    }
+
     leaf name {
       tailf:info "Bridge domain name";
       type string;
@@ -96,6 +103,11 @@ submodule manodc-bridgedomain {
   }
 
   grouping bridge-domain-vlan-data {
+    leaf fabric {
+      tailf:info "Data center fabric name";
+      type string;
+    }
+
     leaf name {
       tailf:info "Bridge domain name";
       type string;
@@ -103,11 +115,16 @@ submodule manodc-bridgedomain {
 
     leaf vlan {
       tailf:info "Vlan id";
-      type vlan-id;
+      type uint16;
     }
   }
 
   grouping bridge-domain-vlan-switch-data {
+    leaf fabric {
+      tailf:info "Data center fabric name";
+      type string;
+    }
+
     leaf name {
       tailf:info "Bridge domain name";
       type string;
@@ -115,18 +132,24 @@ submodule manodc-bridgedomain {
 
     leaf vlan {
       tailf:info "Vlan id";
-      type vlan-id;
+      type uint16;
     }
 
     leaf switch {
       tailf:info "Vlan endpoint";
-      type leafref {
-        path "/ncs:devices/ncs:device/ncs:name";
-      }
+      type string;
     }
   }
 
   grouping bridge-domain-vlan-switch {
+
+    leaf fabric {
+      tailf:info "Data center fabric name";
+      type leafref {
+        path "/manodc:dc-sites/manodc:dc-site/manodc:fabric";
+      }
+    }
+
     leaf name {
       tailf:info "Bridge domain name";
       type string;
