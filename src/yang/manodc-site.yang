@@ -38,12 +38,22 @@ submodule manodc-site {
       "Initial revision.";
   }
 
-  grouping site-configs {
-    leaf fabric {
-      tailf:info "Data center fabric name";
-      type string;
-    }
+  grouping flat-topology {
+    list switch {
+      tailf:info "Switch";
 
+      key name;
+
+      leaf name {
+        tailf:info "Switch name";
+        type leafref {
+          path "/ncs:devices/ncs:device/ncs:name";
+        }
+      }
+    }
+  }
+
+  grouping clos-topology {
     list eor {
       tailf:info "End of row switch";
 
@@ -103,6 +113,48 @@ submodule manodc-site {
           path "/ncs:devices/ncs:device/ncs:name";
         }
         mandatory true;
+      }
+    }
+  }
+
+  grouping site-configs {
+    leaf location {
+      tailf:info "Data center location";
+      type string;
+    }
+
+    leaf hall {
+      tailf:info "Data center hall";
+      type string;
+    }
+
+    leaf fabric {
+      tailf:info "Data center fabric name";
+      type fabric-name;
+    }
+
+    leaf site-name {
+      tailf:info "Data center site name";
+      tailf:hidden "manodc";
+      type string;
+    }
+
+    choice topology {
+      description
+        "Data center topology";
+
+      case clos {
+        when "fabric!='DATA'";
+        description
+          "Control fabric";
+        uses clos-topology;
+      }
+
+      case flat {
+        when "fabric='DATA'";
+        description
+          "Data fabric";
+        uses flat-topology;
       }
     }
 

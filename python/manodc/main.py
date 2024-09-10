@@ -2,7 +2,7 @@
 
 import ncs
 
-from . import services
+from . import dataproviders, services
 
 
 class Main(ncs.application.Application):
@@ -27,6 +27,9 @@ class Main(ncs.application.Application):
                                    state="manodc:vlan-switch-configured",
                                    nano_service_cls=services.BdVlanSwitchServiceCallback)
 
+        Main.dp = dataproviders.DpApi("manodc-site-dp", self.log)
+
     def teardown(self):
         """Teardown service and actions."""
+        Main.dp.daemon.finish()
         self.log.info('Main FINISHED')

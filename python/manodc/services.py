@@ -55,9 +55,9 @@ def is_switch_eor(vlan: ncs.maagic.ListElement, device: str) -> bool:
     return switch_type == "eor"
 
 
-def is_eor_primary(root: ncs.maagic.Root, fabric: str, device: str) -> bool:
+def is_eor_primary(root: ncs.maagic.Root, location: str, hall: str, fabric: str, device: str) -> bool:
     """Check if the switch is an EoR primary switch."""
-    role = root.manodc__dc_sites.dc_site[fabric].eor[device].role
+    role = root.manodc__dc_sites.dc_site[location, hall, fabric].eor[device].role
     return role == "primary"
 
 
@@ -96,13 +96,14 @@ class BdVlanServiceCallback(ncs.application.NanoService):
     def allocate_ids(self, root: ncs.maagic.Root, bdvlan: ncs.maagic.ListElement,
                      _proplist: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
         """Allocate resource-manager ids for the bridge-domain vlan service."""
-        fabric = bdvlan.fabric
+        site_name = bdvlan.site
+        location, hall, fabric = site_name.split("-")
         bd_name = bdvlan.name
         vlan_id = bdvlan.vlan
-        site = root.manodc__dc_sites.dc_site[fabric]
+        site = root.manodc__dc_sites.dc_site[location, hall, fabric]
         vlan_pool = site.manodc__resource_pools.vlan_id_pool
         vrrpv3_pool = site.manodc__resource_pools.vrrpv3_id_pool
-        bdvlan_xpath = f"/bridge-domains/bridge-domain-vlan[fabric='{fabric}'][name='{bd_name}'][vlan='{vlan_id}']"
+        bdvlan_xpath = f"/bridge-domains/bridge-domain-vlan[site='{site}'][name='{bd_name}'][vlan='{vlan_id}']"
         allocated_vlan_id = allocate_vlan_id(root, bdvlan, vlan_pool, bdvlan_xpath, self.log)
         _proplist.append(("vlan_id", allocated_vlan_id))
         if bdvlan.layer3.exists():
@@ -116,13 +117,14 @@ class BdVlanServiceCallback(ncs.application.NanoService):
                                 proplist: List[Tuple[str, str]], device: str) -> None:
         """Configure vlan-switch list."""
         vrrpv3_id = proplist[1][1]
-        fabric = bdvlan.fabric
+        site_name = bdvlan.site
+        location, hall, fabric = site_name.split("-")
         template = ncs.template.Template(bdvlan)
         tvars = ncs.template.Variables()
         tvars.add("SWITCH", device)
         if is_switch_eor(bdvlan, device):
             gateway = bdvlan.layer3.gateway
-            is_primary = is_eor_primary(root, fabric, device)
+            is_primary = is_eor_primary(root, location, hall, fabric, device)
             address = get_primary_address(gateway) if is_primary else get_secondary_address(gateway)
             vrrpv3_priority = 110 if is_primary else 100
             tvars.add("VRRPV3_ID", vrrpv3_id)

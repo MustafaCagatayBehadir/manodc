@@ -74,7 +74,7 @@ module manodc {
       ncs:state "ncs:init" {
         ncs:delete {
           ncs:pre-condition {
-            ncs:monitor "/manodc:bridge-domains/manodc:bridge-domain-vlan-switch-data[manodc:fabric=$FABRIC][manodc:name=$BD_NAME][manodc:vlan=$VLAN][manodc:switch=$SWITCH]" {
+            ncs:monitor "/manodc:bridge-domains/manodc:bridge-domain-vlan-switch-data[manodc:site=$SITE][manodc:name=$BD_NAME][manodc:vlan=$VLAN][manodc:switch=$SWITCH]" {
               ncs:trigger-on-delete;
             }
           }
@@ -84,7 +84,7 @@ module manodc {
       ncs:state "manodc:vlan-configured" {
         ncs:create {
           ncs:pre-condition {
-            ncs:monitor  "/manodc:bridge-domains/manodc:bridge-domain-vlan-data[manodc:fabric=$FABRIC][manodc:name=$BD_NAME][manodc:vlan=$VLAN]/plan/component[type='ncs:self'][name='self']/state[name='manodc:id-allocated']" {
+            ncs:monitor  "/manodc:bridge-domains/manodc:bridge-domain-vlan-data[manodc:site=$SITE][manodc:name=$BD_NAME][manodc:vlan=$VLAN]/plan/component[type='ncs:self'][name='self']/state[name='manodc:id-allocated']" {
               ncs:trigger-expr "status = 'reached'";
             }
           }
@@ -106,8 +106,8 @@ module manodc {
         ncs:component-type-ref "ncs:self";
       }
 
-      ncs:variable "FABRIC" {
-        ncs:value-expr "fabric";
+      ncs:variable "SITE" {
+        ncs:value-expr "site";
       }
       ncs:variable "BD_NAME" {
         ncs:value-expr "name";
@@ -163,7 +163,11 @@ module manodc {
     list dc-site {
       tailf:info "Data center site configuration";
 
-      key fabric;
+      tailf:callpoint "manodc-site-dp" {
+        tailf:transaction-hook object;
+      }
+
+      key "location hall fabric";
 
       uses site-configs;
     }
@@ -183,7 +187,7 @@ module manodc {
       uses ncs:nano-plan-data;
       uses ncs:nano-plan-history;
 
-      key "fabric name vlan";
+      key "site name vlan";
 
       uses bridge-domain-vlan-data;
     }
@@ -194,7 +198,7 @@ module manodc {
       uses ncs:service-data;
       ncs:servicepoint bridge-domain-vlan-servicepoint;
 
-      key "fabric name vlan";
+      key "site name vlan";
 
       uses bridge-domain-vlan;
     }
@@ -209,7 +213,7 @@ module manodc {
       uses ncs:nano-plan-data;
       uses ncs:nano-plan-history;
 
-      key "fabric name vlan switch";
+      key "site name vlan switch";
 
       uses bridge-domain-vlan-switch-data;
     }
@@ -220,7 +224,7 @@ module manodc {
       uses ncs:service-data;
       ncs:servicepoint bridge-domain-vlan-switch-servicepoint;
 
-      key "fabric name vlan switch";
+      key "site name vlan switch";
 
       uses bridge-domain-vlan-switch;
     }
