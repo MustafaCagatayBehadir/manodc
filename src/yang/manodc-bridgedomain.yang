@@ -80,6 +80,13 @@ submodule manodc-bridgedomain {
           type vlan-mode;
           default trunk;
         }
+
+        leaf storm-control {
+          when "../mode = 'access'";
+          tailf:info "Enable storm control ";
+          type boolean;
+          default false;
+        }
       }
     }
 
@@ -180,6 +187,13 @@ submodule manodc-bridgedomain {
         tailf:info "Port mode";
         type vlan-mode;
         default trunk;
+      }
+
+      leaf storm-control {
+        when "../mode = 'access'";
+        tailf:info "Enable storm control ";
+        type boolean;
+        default false;
       }
     }
 

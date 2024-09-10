@@ -1,0 +1,48 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+    <?macro xe-access-switchport-macro?>
+        <switchport>
+            <mode>
+                <access/>
+            </mode>
+            <access>
+                <vlan>{../vlan}</vlan>
+            </access>
+        </switchport>
+    <?endmacro?>
+    <?macro xe-native-switchport-macro?>
+        <switchport>
+            <mode>
+                <trunk/>
+            </mode>
+            <trunk>
+                <native>
+                    <vlan>{../vlan}</vlan>
+                </native>
+            </trunk>
+        </switchport>
+    <?endmacro?>
+    <?macro xe-trunk-switchport-macro?>
+        <switchport>
+            <mode>
+                <trunk/>
+            </mode>
+            <trunk>
+                <allowed>
+                    <vlan>
+                        <vlans>{../vlan}</vlans>
+                    </vlan>
+                </allowed>
+            </trunk>
+        </switchport>
+    <?endmacro?>
+    <?macro xe-spanning-tree-macro?>
+        <spanning-tree>
+            <bpduguard>
+                <enable/>
+            </bpduguard>
+            <?if {mode='access'}?>
+                <portfast/>
+            <?end?><!--if {mode='access'}-->
+        </spanning-tree>
+    <?endmacro?>
+</config-template>

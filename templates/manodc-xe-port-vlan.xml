@@ -1,0 +1,38 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+    <devices xmlns="http://tail-f.com/ns/ncs">
+        <device>
+            <name>{switch}</name>
+            <config>
+                <?foreach {port}?>
+                    <interface xmlns="urn:ios">
+                        <GigabitEthernet>
+                            <name>{id}</name>
+                            <?if {mode='access'}?>
+                                <?expand xe-access-switchport-macro?>
+                                <?expand xe-spanning-tree-macro?>
+                                <mtu>9216</mtu>
+                                <?if {storm-control='true'}?>
+                                    <storm-control>
+                                        <broadcast>
+                                        <level>1.0</level>
+                                        </broadcast>
+                                        <multicast>
+                                        <level>1.0</level>
+                                        </multicast>
+                                    </storm-control>
+                                <?end?><!--if {storm-control}-->
+                            <?elif {mode="native"}?><!--if {mode='access'}-->
+                                <?expand xe-native-switchport-macro?>
+                                <?expand xe-spanning-tree-macro?>
+                            <?else?><!--if {mode='access'}-->
+                                <?expand xe-trunk-switchport-macro?>
+                                <?expand xe-spanning-tree-macro?>
+                            <?end?><!--if {mode='access'}-->
+                            <shutdown tags="delete"/>
+                        </GigabitEthernet>
+                    </interface>
+                <?end?><!--foreach {port}-->
+            </config>
+        </device>
+    </devices>
+</config-template>

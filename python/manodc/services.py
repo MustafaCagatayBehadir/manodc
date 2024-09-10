@@ -158,5 +158,10 @@ class BdVlanSwitchServiceCallback(ncs.application.NanoService):
         vlan_id = bdvlan.vlan
         device = bdvlan.switch
         self.log.info(f"Configuring bridge-domain {bd_name} vlan {vlan_id} for {device}...")
+        self.log.info("Template manodc-xe-vlan is applying...")
         template.apply("manodc-xe-vlan", tvars)
+        self.log.info("Template manodc-xe-vlan applied.")
+        self.log.info("Template manodc-xe-port-vlan is applying...")
+        template.apply("manodc-xe-port-vlan")
+        self.log.info("Template manodc-xe-port-vlan applied.")
         self.log.info(f"Bridge-domain {bd_name} vlan {vlan_id} for {device} configured.")
