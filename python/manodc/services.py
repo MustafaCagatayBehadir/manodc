@@ -151,17 +151,20 @@ class BdVlanSwitchServiceCallback(ncs.application.NanoService):
             self.configure_bdvlan(service)
 
     def configure_bdvlan(self, bdvlan: ncs.maagic.ListElement) -> None:
-        """Configure vlan-id."""
+        """Configure vlan."""
         template = ncs.template.Template(bdvlan)
-        tvars = ncs.template.Variables()
         bd_name = bdvlan.name
         vlan_id = bdvlan.vlan
         device = bdvlan.switch
         self.log.info(f"Configuring bridge-domain {bd_name} vlan {vlan_id} for {device}...")
-        self.log.info("Template manodc-xe-vlan is applying...")
-        template.apply("manodc-xe-vlan", tvars)
-        self.log.info("Template manodc-xe-vlan applied.")
-        self.log.info("Template manodc-xe-port-vlan is applying...")
-        template.apply("manodc-xe-port-vlan")
-        self.log.info("Template manodc-xe-port-vlan applied.")
+        self.log.info("Template manodc-nx-vlan is applying...")
+        template.apply("manodc-nx-vlan")
+        self.log.info("Template manodc-nx-vlan applied.")
+        self.log.info("Template manodc-nx-port-vlan is applying...")
+        template.apply("manodc-nx-port-vlan")
+        self.log.info("Template manodc-nx-port-vlan applied.")
+        if bdvlan.layer3.exists():
+            self.log.info("Template manodc-nx-svi is applying...")
+            template.apply("manodc-nx-svi")
+            self.log.info("Template manodc-nx-svi applied.")
         self.log.info(f"Bridge-domain {bd_name} vlan {vlan_id} for {device} configured.")

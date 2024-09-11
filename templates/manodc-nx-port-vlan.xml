@@ -4,14 +4,20 @@
             <name>{switch}</name>
             <config>
                 <?foreach {port}?>
-                    <interface xmlns="urn:ios">
-                        <GigabitEthernet>
+                    <interface xmlns="http://tail-f.com/ned/cisco-nx">
+                        <Ethernet>
                             <name>{id}</name>
+                            <enable>
+                                <switchport>true</switchport>
+                            </enable>
                             <?if {mode='access'}?>
-                                <?expand xe-access-switchport-macro?>
-                                <?expand xe-spanning-tree-macro?>
+                                <?expand nx-access-switchport-macro?>
+                                <?expand nx-spanning-tree-macro?>
                                 <mtu>9216</mtu>
                                 <?if {storm-control='true'}?>
+                                    <priority-flow-control>
+                                        <mode>off</mode>
+                                    </priority-flow-control>
                                     <storm-control>
                                         <broadcast>
                                         <level>1.0</level>
@@ -22,14 +28,14 @@
                                     </storm-control>
                                 <?end?><!--if {storm-control}-->
                             <?elif {mode="native"}?><!--if {mode='access'}-->
-                                <?expand xe-native-switchport-macro?>
-                                <?expand xe-spanning-tree-macro?>
+                                <?expand nx-native-switchport-macro?>
+                                <?expand nx-spanning-tree-macro?>
                             <?else?><!--if {mode='access'}-->
-                                <?expand xe-trunk-switchport-macro?>
-                                <?expand xe-spanning-tree-macro?>
+                                <?expand nx-trunk-switchport-macro?>
+                                <?expand nx-spanning-tree-macro?>
                             <?end?><!--if {mode='access'}-->
                             <shutdown tags="delete"/>
-                        </GigabitEthernet>
+                        </Ethernet>
                     </interface>
                 <?end?><!--foreach {port}-->
             </config>

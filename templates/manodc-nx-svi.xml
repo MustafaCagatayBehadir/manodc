@@ -1,0 +1,55 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+    <devices xmlns="http://tail-f.com/ns/ncs">
+        <device>
+            <name>{switch}</name>
+            <config>
+                <feature xmlns="http://tail-f.com/ned/cisco-nx">
+                    <interface-vlan/>
+                </feature>
+                <feature xmlns="http://tail-f.com/ned/cisco-nx">
+                    <vrrpv3/>
+                </feature>
+                <vrf xmlns="http://tail-f.com/ned/cisco-nx">
+                    <context>
+                        <id>{layer3/vrf}</id>
+                        <address-family>
+                            <ipv4>
+                                <unicast />
+                            </ipv4>
+                            <ipv6>
+                                <unicast />
+                            </ipv6>
+                        </address-family>
+                    </context>
+                </vrf>
+                <interface xmlns="http://tail-f.com/ned/cisco-nx">
+                    <Vlan>
+                        <name>{vlan}</name>
+                        <description>{name}::VLAN{vlan}</description>
+                        <?set-context-node {layer3}?>
+                        <vrf>
+                            <member>{vrf}</member>
+                        </vrf>
+                        <ip>
+                            <address>
+                                <ipaddr>{address}</ipaddr>
+                            </address>
+                        </ip>
+                        <mtu>9216</mtu>
+                        <vrrpv3>
+                            <vr>{vrrpv3-id}</vr>
+                            <address-family>ipv4</address-family>
+                            <address>
+                                <ipv4-address-list>
+                                    <address>{substring-before(vip-address, '/')}</address>
+                                    <type>primary</type>
+                                </ipv4-address-list>
+                            </address>
+                            <priority>{vrrpv3-priority}</priority>
+                        </vrrpv3>
+                    </Vlan>
+                </interface>
+            </config>
+        </device>
+    </devices>
+</config-template>

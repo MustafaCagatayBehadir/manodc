@@ -3,7 +3,7 @@
         <device>
             <name>{switch}</name>
             <config>
-                <vlan xmlns="urn:ios">
+                <vlan xmlns="http://tail-f.com/ned/cisco-nx">
                     <vlan-list>
                         <id>{vlan}</id>
                         <name>{name}::VLAN{vlan}</name>
