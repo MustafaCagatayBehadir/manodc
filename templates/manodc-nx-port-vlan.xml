@@ -1,4 +1,5 @@
 <config-template xmlns="http://tail-f.com/ns/config/1.0">
+    <?set SEP='::'?>
     <devices xmlns="http://tail-f.com/ns/ncs">
         <device>
             <name>{switch}</name>
@@ -7,6 +8,7 @@
                     <interface xmlns="http://tail-f.com/ned/cisco-nx">
                         <Ethernet>
                             <name>{id}</name>
+                            <description>{concat(string(../name), $SEP, string(connected-host), $SEP, string(host-port))}</description>
                             <enable>
                                 <switchport>true</switchport>
                             </enable>

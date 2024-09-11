@@ -5,12 +5,14 @@
       <name>{name}</name>
       <vlan>{vlan}</vlan>
       <switch>{$SWITCH}</switch>
+      <description>{description}</description>
       <?copy-tree {switch[name=$SWITCH]}?>
-      <?if {switch[name=$SWITCH]/switch-type = 'eor'}?>
+      <?if {switch[name=$SWITCH]/switch-type = 'eor' and boolean(layer3)}?>
+        <?set-context-node {layer3}?> 
         <layer3>
-          <vrf>{layer3/vrf}</vrf>
+          <vrf>{vrf}</vrf>
           <address>{$ADDRESS}</address>
-          <vip-address>{layer3/gateway}</vip-address>
+          <vip-address>{gateway}</vip-address>
           <vrrpv3-id>{$VRRPV3_ID}</vrrpv3-id>
           <vrrpv3-priority>{$VRRPV3_PRIORITY}</vrrpv3-priority>
         </layer3>

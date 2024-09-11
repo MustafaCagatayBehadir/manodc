@@ -6,7 +6,11 @@
                 <vlan xmlns="http://tail-f.com/ned/cisco-nx">
                     <vlan-list>
                         <id>{vlan}</id>
-                        <name>{name}::VLAN{vlan}</name>
+                        <?if {description}?>
+                            <name>{description}</name>
+                        <?else?><!--if {description}-->
+                            <name>{name}::VLAN{vlan}</name>
+                        <?end?><!--if {description}-->
                     </vlan-list>
                 </vlan>
             </config>

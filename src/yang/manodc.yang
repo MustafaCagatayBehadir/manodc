@@ -200,6 +200,8 @@ module manodc {
 
       key "site name vlan";
 
+      unique "site vlan";
+
       uses bridge-domain-vlan;
     }
 

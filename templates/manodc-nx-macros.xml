@@ -11,6 +11,11 @@
         <switchport>
             <mode>trunk</mode>
             <trunk>
+                <allowed>
+                    <vlan>
+                        <ids>{../vlan}</ids>
+                    </vlan>
+                </allowed>
                 <native>
                     <vlan>
                         <vlan-id>{../vlan}</vlan-id>

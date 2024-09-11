@@ -110,7 +110,7 @@ class BdVlanServiceCallback(ncs.application.NanoService):
             allocated_vrrpv3_id = allocate_vrrpv3_id(root, bdvlan, vrrpv3_pool, bdvlan_xpath, self.log)
             _proplist.append(("vrrpv3_id", allocated_vrrpv3_id))
         else:
-            _proplist.append(("vrrpv3_id", "-1"))
+            _proplist.append(("vrrpv3_id", "0"))
         return _proplist
 
     def configure_bdvlan_switch(self, root: ncs.maagic.Root, bdvlan: ncs.maagic.ListElement,
@@ -122,7 +122,7 @@ class BdVlanServiceCallback(ncs.application.NanoService):
         template = ncs.template.Template(bdvlan)
         tvars = ncs.template.Variables()
         tvars.add("SWITCH", device)
-        if is_switch_eor(bdvlan, device):
+        if is_switch_eor(bdvlan, device) and bdvlan.layer3.exists():
             gateway = bdvlan.layer3.gateway
             is_primary = is_eor_primary(root, location, hall, fabric, device)
             address = get_primary_address(gateway) if is_primary else get_secondary_address(gateway)
@@ -133,7 +133,7 @@ class BdVlanServiceCallback(ncs.application.NanoService):
         else:
             tvars.add("VRRPV3_ID", vrrpv3_id)
             tvars.add("ADDRESS", "")
-            tvars.add("VRRPV3_PRIORITY", -1)
+            tvars.add("VRRPV3_PRIORITY", 0)
         self.log.info(f"Configuring vlan-switch for {device}...")
         template.apply("manodc-vlan-switch", tvars)
         self.log.info(f"Vlan-switch for {device} configured.")

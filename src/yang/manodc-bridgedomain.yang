@@ -48,6 +48,11 @@ submodule manodc-bridgedomain {
       type vlan-id;
     }
 
+    leaf description {
+      tailf:info "Bridge domain vlan description";
+      type string;
+    }
+
     list switch {
       tailf:info "Vlan endpoint";
       key name;
@@ -70,11 +75,27 @@ submodule manodc-bridgedomain {
         tailf:info "Switch port";
         key id;
 
+        // Same port can not be used in a different service name
+        // And connected-host and connected-port must be same
+
         leaf id {
           tailf:info "Port id";
           type tor-port;
         }
 
+        leaf connected-host {
+          tailf:info "Connected host";
+          type string;
+          mandatory true;
+        }
+
+        leaf host-port {
+          tailf:info "Host port";
+          type string;
+          mandatory true;
+        }
+
+        // Access vlan and 'trunk or native' vlan can not be added to the same port
         leaf mode {
           tailf:info "Port mode";
           type vlan-mode;
@@ -174,6 +195,11 @@ submodule manodc-bridgedomain {
       }
     }
 
+    leaf description {
+      tailf:info "Bridge domain vlan description";
+      type string;
+    }
+
     list port {
       tailf:info "Switch port";
       key id;
@@ -181,6 +207,16 @@ submodule manodc-bridgedomain {
       leaf id {
         tailf:info "Port id";
         type tor-port;
+      }
+
+      leaf connected-host {
+        tailf:info "Connected host";
+        type string;
+      }
+
+      leaf host-port {
+        tailf:info "Host port";
+        type string;
       }
 
       leaf mode {
