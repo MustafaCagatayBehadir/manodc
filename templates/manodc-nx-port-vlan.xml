@@ -1,5 +1,5 @@
 <config-template xmlns="http://tail-f.com/ns/config/1.0">
-    <?set SEP='::'?>
+    <?set SEP='-'?>
     <devices xmlns="http://tail-f.com/ns/ncs">
         <device>
             <name>{switch}</name>

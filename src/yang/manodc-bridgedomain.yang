@@ -18,6 +18,10 @@ submodule manodc-bridgedomain {
     prefix ncs;
   }
 
+  import inventory-manager {
+    prefix inv;
+  }
+
   include manodc-types {
     revision-date "2024-08-22";
   }
@@ -34,7 +38,7 @@ submodule manodc-bridgedomain {
     leaf site {
       tailf:info "Data center site name";
       type leafref {
-        path "/manodc:dc-sites/manodc:dc-site/manodc:site-name";
+        path "/inv:inventory-manager/inv:name";
       }
     }
 
@@ -50,7 +54,13 @@ submodule manodc-bridgedomain {
 
     leaf description {
       tailf:info "Bridge domain vlan description";
-      type string;
+      type string {
+        pattern
+          '[^\s]+' {
+            error-message
+              "No space/s allowed in vlan description";
+          }
+      }  
     }
 
     list switch {
@@ -60,29 +70,48 @@ submodule manodc-bridgedomain {
       leaf name {
         tailf:info "Endpoint name";
         type leafref {
-          path "/ncs:devices/ncs:device/ncs:name";
+          path "/inv:inventory-manager[inv:name=current()/../../site]/inv:device/inv:name";
         }
-      }
-
-      leaf switch-type {
-        tailf:info "Switch can be eor or tor";
-        type switch-type;
-        default tor;
       }
 
       list port {
-        when "../switch-type = 'tor'";
+        when "/inv:inventory-manager[inv:name=current()/../../site]/inv:device[inv:name=current()/../name]/inv:device-role = 'TOR'";
         tailf:info "Switch port";
         key id;
-
-        // Same port can not be used in a different service name
-        // And connected-host and connected-port must be same
-
         leaf id {
           tailf:info "Port id";
-          type tor-port;
-        }
+          type string;
 
+          // tailf:non-strict-leafref {
+          //   path "/inv:inventory-manager[inv:name=current()/../../../site]/inv:device[inv:name=current()/../../name]/inv:interfaces/inv:interface/inv:id";
+          // }
+        }
+        must "(count(/inv:inventory-manager[inv:name=current()/../../site]"+
+          "/inv:device[inv:name=current()/../name]"+
+          "/inv:interfaces/inv:interface[inv:id=current()/id])=1)" {
+          error-message
+            "Configuration not allowed: The specified port id does not exist in the device's inventory. Check the inventory-manager.";
+        }
+        must "(count(/manodc:bridge-domains/bridge-domain-vlan[manodc:site=current()/../../site]"+
+          "[manodc:vlan != current()/../../vlan]"+
+          "[manodc:name!=current()/../../name]"+
+          "/switch[manodc:name= current()/../name]"+
+          "/port[manodc:id = current()/id])=0)" {
+          error-message
+            "Configuration not allowed: When configuring multiple Bridge Domains on a port,"+ 
+            "each Bridge Domain must use same Service Name across all ManoDC Services.";
+        }
+        must "(count(/manodc:bridge-domains/bridge-domain-vlan[manodc:site=current()/../../site]"+
+          "[manodc:vlan != current()/../../vlan]"+
+          "[manodc:name=current()/../../name]"+
+          "/switch[manodc:name= current()/../name]"+
+          "/port[manodc:id = current()/id]"+
+          "/connected-host != current()/connected-host) = 0)"+
+          "and (count(./host-port != current()/host-port) = 0)" {
+          error-message
+          "Configuration not allowed: When configuring multiple Bridge Domains on a port,"+ 
+          "you must maintain same connected-host and connected-port definitions across all ManoDC Services.";
+        }
         leaf connected-host {
           tailf:info "Connected host";
           type string;
@@ -94,8 +123,18 @@ submodule manodc-bridgedomain {
           type string;
           mandatory true;
         }
-
-        // Access vlan and 'trunk or native' vlan can not be added to the same port
+        must "(count(/manodc:bridge-domains/bridge-domain-vlan[manodc:site=current()/../../site]"+
+          "[manodc:vlan != current()/../../vlan]"+
+          "[manodc:name=current()/../../name]"+
+          "/switch[manodc:name= current()/../name]"+
+          "/port[manodc:id = current()/id]"+
+          "/mode = 'access' and current()/mode != 'access')=0)"+
+          "or "+
+          "(count(./mode = 'trunk' or .= 'native' and current()/mode = 'access') = 0)" {
+          error-message
+            "Configuration not allowed: When configuring multiple Bridge Domains on a port,"+ 
+            "you must maintain consistent port-mode across all ManoDC Services.(Access VLAN and Trunk/Native VLAN cannot be configured on the same port)";
+        }
         leaf mode {
           tailf:info "Port mode";
           type vlan-mode;
@@ -112,7 +151,6 @@ submodule manodc-bridgedomain {
     }
 
     container layer3 {
-      when "count(../switch[switch-type='eor'])=2";
       presence
         "Enable layer 3 network configuration";
       tailf:info "Layer 3 network configuration";
@@ -126,6 +164,9 @@ submodule manodc-bridgedomain {
         tailf:info "SVI gateway";
         mandatory true;
         type tailf:ip-address-and-prefix-length;
+        tailf:validate gateway-valpoint {
+          tailf:dependency ".";
+        }
       }
     }
   }
@@ -174,7 +215,7 @@ submodule manodc-bridgedomain {
     leaf site {
       tailf:info "Data center site name";
       type leafref {
-        path "/manodc:dc-sites/manodc:dc-site/manodc:site-name";
+        path "/inv:inventory-manager/inv:name";
       }
     }
 

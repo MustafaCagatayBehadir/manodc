@@ -1,0 +1,50 @@
+cli-c {
+    local-node {
+        data devices device AVR-NDC1-NFVC-EOR-SW-01
+               config
+                vlan 1000
+                 name Mavenir-vIMS::VLAN1000
+                exit
+               !
+              !
+              devices device AVR-NDC1-NFVC-EOR-SW-02
+               config
+                vlan 1000
+                 name Mavenir-vIMS::VLAN1000
+                exit
+               !
+              !
+              devices device AVR-NDC1-NFVC-TOR-SW-01
+               config
+                vlan 1000
+                 name Mavenir-vIMS::VLAN1000
+                exit
+               !
+              !
+              devices device AVR-NDC1-NFVC-TOR-SW-02
+               config
+                vlan 1000
+                 name Mavenir-vIMS::VLAN1000
+                exit
+               !
+              !
+              resource-pools id-pool AVR_NDC1_CONTROL_VLAN_POOL
+               allocation bridge-domains_bridge-domain-vlan_AVR-NDC1-CONTROL_Mavenir-vIMS_1000
+                username admin
+                allocating-service [ /manodc:bridge-domains/manodc:bridge-domain-vlan[manodc:site='AVR-NDC1-CONTROL'][manodc:name='Mavenir-vIMS'][manodc:vlan='1000'] ]
+                redeploy-type default
+                request sync false
+                request id 1000
+               !
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-EOR-SW-01
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-EOR-SW-02
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-TOR-SW-01
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-TOR-SW-02
+              !
+              
+    }
+}

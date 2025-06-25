@@ -1,0 +1,110 @@
+cli-c {
+    local-node {
+        data devices device AVR-NDC1-NFVC-EOR-SW-01
+               config
+                vlan 1000
+                 name Mavenir-vIMS::VLAN1000
+                exit
+               !
+              !
+              devices device AVR-NDC1-NFVC-EOR-SW-02
+               config
+                vlan 1000
+                 name Mavenir-vIMS::VLAN1000
+                exit
+               !
+              !
+              devices device AVR-NDC1-NFVC-TOR-SW-01
+               config
+                vlan 1000
+                 name Mavenir-vIMS::VLAN1000
+                exit
+                interface Ethernet1/1
+                 switchport
+                 switchport mode access
+                 switchport access vlan 1000
+                 no shutdown
+                 description Mavenir-vIMS::avucpcpt81::p1p1
+                 mtu 9216
+                 spanning-tree bpduguard enable
+                 spanning-tree port type edge
+                exit
+                interface Ethernet1/2
+                 switchport
+                 switchport mode access
+                 switchport access vlan 1000
+                 no shutdown
+                 description Mavenir-vIMS::avucpcpt82::p1p1
+                 mtu 9216
+                 spanning-tree bpduguard enable
+                 spanning-tree port type edge
+                exit
+               !
+              !
+              devices device AVR-NDC1-NFVC-TOR-SW-02
+               config
+                vlan 1000
+                 name Mavenir-vIMS::VLAN1000
+                exit
+                interface Ethernet1/1
+                 switchport
+                 switchport mode access
+                 switchport access vlan 1000
+                 no shutdown
+                 description Mavenir-vIMS::avucpcpt81::p2p1
+                 mtu 9216
+                 spanning-tree bpduguard enable
+                 spanning-tree port type edge
+                exit
+                interface Ethernet1/2
+                 switchport
+                 switchport mode access
+                 switchport access vlan 1000
+                 no shutdown
+                 description Mavenir-vIMS::avucpcpt82::p2p1
+                 mtu 9216
+                 spanning-tree bpduguard enable
+                 spanning-tree port type edge
+                exit
+               !
+              !
+              resource-pools id-pool AVR_NDC1_CONTROL_VLAN_POOL
+               allocation bridge-domains_bridge-domain-vlan_AVR-NDC1-CONTROL_Mavenir-vIMS_1000
+                username admin
+                allocating-service [ /manodc:bridge-domains/manodc:bridge-domain-vlan[manodc:site='AVR-NDC1-CONTROL'][manodc:name='Mavenir-vIMS'][manodc:vlan='1000'] ]
+                redeploy-type default
+                request sync false
+                request id 1000
+               !
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-EOR-SW-01
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-EOR-SW-02
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-TOR-SW-01
+               port 1/1
+                connected-host avucpcpt81
+                host-port p1p1
+                mode access
+               !
+               port 1/2
+                connected-host avucpcpt82
+                host-port p1p1
+                mode access
+               !
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-TOR-SW-02
+               port 1/1
+                connected-host avucpcpt81
+                host-port p2p1
+                mode access
+               !
+               port 1/2
+                connected-host avucpcpt82
+                host-port p2p1
+                mode access
+               !
+              !
+              
+    }
+}

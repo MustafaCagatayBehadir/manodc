@@ -6,6 +6,8 @@ from typing import List, Tuple
 import ncs
 from resource_manager.id_allocator import id_read, id_request
 
+from . import utils
+
 USER = "admin"
 
 
@@ -16,7 +18,8 @@ def get_node_modified_keypath(node: ncs.maagic.ListElement) -> str:
     return modified_keypath
 
 
-def read_allocated_id(root: ncs.maagic.Root, pool: str, allocation_name: str, log: ncs.log.Log) -> int:
+def read_allocated_id(root: ncs.maagic.Root, pool: str, allocation_name: str, requested_id: int,
+                      log: ncs.log.Log) -> int:
     """Read allocated ID from specific pool."""
     try:
         allocated_id = id_read(USER, root, pool, allocation_name)
@@ -24,17 +27,22 @@ def read_allocated_id(root: ncs.maagic.Root, pool: str, allocation_name: str, lo
             raise ValueError(allocated_id)
         log.info(f"Pool: {pool} - Allocation: {allocation_name} - Id: {allocated_id}")
     except LookupError as err:
-        raise LookupError(f"\n{pool} - {allocation_name} - failed with:\n\n{err}\n") from err
+        if "PoolExhaustedException" in str(err):
+            log.error(f"Requested id {str(requested_id)} is not available in pool {pool}.")
+            raise LookupError(f"\nRequested id {str(requested_id)} is not available in pool {pool}.") from err
+    except ValueError as err:
+        log.error(f"Error reading id: {err}")
+        raise ValueError(f"\nError reading id: {err}") from err
     return allocated_id
 
 
 def allocate_vlan_id(root: ncs.maagic.Root, bdvlan: ncs.maagic.ListElement, pool: str, xpath: str, log: ncs.log.Log):
     """Allocate fabric vlan id."""
-    vlan_id = bdvlan.vlan
+    requested_vlan_id = bdvlan.vlan
     alloc_name = get_node_modified_keypath(bdvlan)
-    id_request(bdvlan, xpath, USER, pool, alloc_name, False, vlan_id, alloc_sync=True, root=root)
+    id_request(bdvlan, xpath, USER, pool, alloc_name, False, requested_vlan_id, alloc_sync=True, root=root)
     log.info(f"Pool {pool} vlan-id is allocated.")
-    vlan_id = read_allocated_id(root, pool, alloc_name, log)
+    vlan_id = read_allocated_id(root, pool, alloc_name, requested_vlan_id, log)
     log.info(f"Pool {pool} vlan-id {vlan_id} is read.")
     return vlan_id
 
@@ -44,21 +52,21 @@ def allocate_vrrpv3_id(root: ncs.maagic.Root, bdvlan: ncs.maagic.ListElement, po
     alloc_name = get_node_modified_keypath(bdvlan)
     id_request(bdvlan, xpath, USER, pool, alloc_name, False, -1, alloc_sync=True, root=root)
     log.info(f"Pool {pool} vrrpv3-id is allocated.")
-    vrrpv3_id = read_allocated_id(root, pool, alloc_name, log)
+    vrrpv3_id = read_allocated_id(root, pool, alloc_name, -1, log)
     log.info(f"Pool {pool} vrrpv3-id {vrrpv3_id} is read.")
     return vrrpv3_id
 
 
-def is_switch_eor(vlan: ncs.maagic.ListElement, device: str) -> bool:
+def is_switch_eor(root: ncs.maagic.Root, site_name: str, device: str) -> bool:
     """Check if the switch is an EoR switch."""
-    switch_type = vlan.switch[device].switch_type
-    return switch_type == "eor"
+    switch_type = root.inv__inventory_manager[site_name].device[device].device_role
+    return switch_type == "EOR"
 
 
-def is_eor_primary(root: ncs.maagic.Root, location: str, hall: str, fabric: str, device: str) -> bool:
+def is_eor_primary(site_name: str, device: str) -> bool:
     """Check if the switch is an EoR primary switch."""
-    role = root.manodc__dc_sites.dc_site[location, hall, fabric].eor[device].role
-    return role == "primary"
+    eors = utils.get_eor_from_site(site_name)
+    return device == eors[0]
 
 
 def get_primary_address(gateway: str) -> str:
@@ -75,6 +83,7 @@ def get_secondary_address(gateway: str) -> str:
     return str(vip.ip + 2) + "/" + prefixlen
 
 
+#pylint: disable-msg=too-many-arguments,too-many-arguments
 class BdVlanServiceCallback(ncs.application.NanoService):
     """Service callback handler for the vlan service."""
 
@@ -97,13 +106,12 @@ class BdVlanServiceCallback(ncs.application.NanoService):
                      _proplist: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
         """Allocate resource-manager ids for the bridge-domain vlan service."""
         site_name = bdvlan.site
-        location, hall, fabric = site_name.split("-")
         bd_name = bdvlan.name
         vlan_id = bdvlan.vlan
-        site = root.manodc__dc_sites.dc_site[location, hall, fabric]
-        vlan_pool = site.manodc__resource_pools.vlan_id_pool
-        vrrpv3_pool = site.manodc__resource_pools.vrrpv3_id_pool
-        bdvlan_xpath = f"/bridge-domains/bridge-domain-vlan[site='{site}'][name='{bd_name}'][vlan='{vlan_id}']"
+        site = root.inv__inventory_manager[site_name].site_configs
+        vlan_pool = site.inv__resource_pools.vlan_id_pool
+        vrrpv3_pool = site.inv__resource_pools.vrrpv3_id_pool
+        bdvlan_xpath = f"/bridge-domains/bridge-domain-vlan[site='{site_name}'][name='{bd_name}'][vlan='{vlan_id}']"
         allocated_vlan_id = allocate_vlan_id(root, bdvlan, vlan_pool, bdvlan_xpath, self.log)
         _proplist.append(("vlan_id", allocated_vlan_id))
         if bdvlan.layer3.exists():
@@ -118,13 +126,12 @@ class BdVlanServiceCallback(ncs.application.NanoService):
         """Configure vlan-switch list."""
         vrrpv3_id = proplist[1][1]
         site_name = bdvlan.site
-        location, hall, fabric = site_name.split("-")
         template = ncs.template.Template(bdvlan)
         tvars = ncs.template.Variables()
         tvars.add("SWITCH", device)
-        if is_switch_eor(bdvlan, device) and bdvlan.layer3.exists():
+        if is_switch_eor(root, site_name, device) and bdvlan.layer3.exists():
             gateway = bdvlan.layer3.gateway
-            is_primary = is_eor_primary(root, location, hall, fabric, device)
+            is_primary = is_eor_primary(site_name, device)
             address = get_primary_address(gateway) if is_primary else get_secondary_address(gateway)
             vrrpv3_priority = 110 if is_primary else 100
             tvars.add("VRRPV3_ID", vrrpv3_id)

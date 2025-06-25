@@ -7,7 +7,7 @@ SRC = $(wildcard yang/manodc.yang)
 DIRS = ../load-dir
 FXS = $(SRC:yang/%.yang=../load-dir/%.fxs)
 
-YANGPATH += ./yang ../../cisco-ios-cli-6.102/src/ncsc-out/modules/yang ../../resource-manager/src/yang
+YANGPATH += ./yang ../../resource-manager/src/yang ../../inventory-manager/src/yang
 
 NCSCPATH   = $(YANGPATH:%=--yangpath %)
 YANGERPATH = $(YANGPATH:%=--path %)
@@ -26,3 +26,30 @@ $(DIRS):
 clean:
 	rm -rf $(DIRS)
 .PHONY: clean
+
+draw:
+	$(info ============= YANG tree to README =============)
+	@sed -i '/^## Model Tree/,$$d' ../README.md
+	@if [ -n "$$(tail -n 1 ../README.md)" ]; then echo "\n">> ../README.md; fi
+	@echo "## Model Tree\n\`\`\`" >> ../README.md
+	@pyang -f tree `grep -m 1 -R "module..*{" . --include *.yang | cut -d ":" -f 1` --ignore-errors > ../README.md
+	@echo '```' >> ../README.md
+	@$(MAKE) remove_fluff
+
+# Check if 'ncs:plan-data' is used in YANG, find fluff area
+# and cut it out. Works for multiple servicepoint models.
+remove_fluff:
+	@PLAN=$$(grep -R "uses ncs:plan-data;" . --include *.yang); \
+	if [ -n "$${PLAN}" ] && ! echo "$${PLAN}" | grep -q "//"; then \
+		RANGE="401"; \
+	else \
+	RANGE="366"; \
+	fi; \
+	while : ; do \
+	START=$$(grep -n "+---x check-sync" ../README.md -m 1 | cut -d ":" -f 1); \
+	END=$$(($${START} + $${RANGE})); \
+	if [ -z "$${START}" ]; then \
+		break; \
+	fi; \
+	sed -i "$${START},$${END}d" ../README.md; \
+	done

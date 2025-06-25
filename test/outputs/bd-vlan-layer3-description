@@ -1,0 +1,110 @@
+cli-c {
+    local-node {
+        data devices device AVR-NDC1-NFVC-EOR-SW-01
+               config
+                feature vrrpv3
+                feature interface-vlan
+                vlan 1000
+                 name DESC001
+                exit
+                vrf context Tcell-GRT
+                 address-family ipv4 unicast
+                 exit
+                 address-family ipv6 unicast
+                 exit
+                exit
+                interface Vlan1000
+                 no shutdown
+                 description DESC001
+                 vrf member Tcell-GRT
+                 ip address 10.141.14.2/29
+                 mtu 9216
+                 vrrpv3 1 address-family ipv4
+                  address 10.141.14.1 primary
+                  priority 110
+                 exit
+                exit
+               !
+              !
+              devices device AVR-NDC1-NFVC-EOR-SW-02
+               config
+                feature vrrpv3
+                feature interface-vlan
+                vlan 1000
+                 name DESC001
+                exit
+                vrf context Tcell-GRT
+                 address-family ipv4 unicast
+                 exit
+                 address-family ipv6 unicast
+                 exit
+                exit
+                interface Vlan1000
+                 no shutdown
+                 description DESC001
+                 vrf member Tcell-GRT
+                 ip address 10.141.14.3/29
+                 mtu 9216
+                 vrrpv3 1 address-family ipv4
+                  address 10.141.14.1 primary
+                  priority 100
+                 exit
+                exit
+               !
+              !
+              devices device AVR-NDC1-NFVC-TOR-SW-01
+               config
+                vlan 1000
+                 name DESC001
+                exit
+               !
+              !
+              devices device AVR-NDC1-NFVC-TOR-SW-02
+               config
+                vlan 1000
+                 name DESC001
+                exit
+               !
+              !
+              resource-pools id-pool AVR_NDC1_CONTROL_VLAN_POOL
+               allocation bridge-domains_bridge-domain-vlan_AVR-NDC1-CONTROL_Mavenir-vIMS_1000
+                username admin
+                allocating-service [ /manodc:bridge-domains/manodc:bridge-domain-vlan[manodc:site='AVR-NDC1-CONTROL'][manodc:name='Mavenir-vIMS'][manodc:vlan='1000'] ]
+                redeploy-type default
+                request sync false
+                request id 1000
+               !
+              !
+              resource-pools id-pool AVR_NDC1_CONTROL_VRRPV3_POOL
+               allocation bridge-domains_bridge-domain-vlan_AVR-NDC1-CONTROL_Mavenir-vIMS_1000
+                username admin
+                allocating-service [ /manodc:bridge-domains/manodc:bridge-domain-vlan[manodc:site='AVR-NDC1-CONTROL'][manodc:name='Mavenir-vIMS'][manodc:vlan='1000'] ]
+                redeploy-type default
+                request sync false
+               !
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-EOR-SW-01
+               description DESC001
+               layer3 vrf Tcell-GRT
+               layer3 address 10.141.14.2/29
+               layer3 vip-address 10.141.14.1/29
+               layer3 vrrpv3-id 1
+               layer3 vrrpv3-priority 110
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-EOR-SW-02
+               description DESC001
+               layer3 vrf Tcell-GRT
+               layer3 address 10.141.14.3/29
+               layer3 vip-address 10.141.14.1/29
+               layer3 vrrpv3-id 1
+               layer3 vrrpv3-priority 100
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-TOR-SW-01
+               description DESC001
+              !
+              bridge-domains bridge-domain-vlan-switch AVR-NDC1-CONTROL Mavenir-vIMS 1000 AVR-NDC1-NFVC-TOR-SW-02
+               description DESC001
+              !
+              
+    }
+}

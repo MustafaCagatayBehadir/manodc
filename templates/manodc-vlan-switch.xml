@@ -1,13 +1,15 @@
 <config xmlns="http://tail-f.com/ns/config/1.0">
+  <?set SITE={site}?> 
   <bridge-domains xmlns="http://turkcell.com/manodc">
     <bridge-domain-vlan-switch>
-      <site>{site}</site>
+      <site>{$SITE}</site>
       <name>{name}</name>
       <vlan>{vlan}</vlan>
       <switch>{$SWITCH}</switch>
       <description>{description}</description>
       <?copy-tree {switch[name=$SWITCH]}?>
-      <?if {switch[name=$SWITCH]/switch-type = 'eor' and boolean(layer3)}?>
+      <?set-root-node {/}?>
+      <?if {/inventory-manager[name=$SITE]/device[name=$SWITCH]/device-role = 'EOR' and boolean(layer3)}?>
         <?set-context-node {layer3}?> 
         <layer3>
           <vrf>{vrf}</vrf>

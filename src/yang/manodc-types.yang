@@ -20,6 +20,14 @@ submodule manodc-types {
       "Initial revision.";
   }
 
+  identity switch {
+    base ncs:plan-component-type;
+  }
+
+  identity configured {
+    base ncs:plan-state;
+  }
+
   typedef switch-type {
     type enumeration {
       enum eor {
@@ -69,20 +77,44 @@ submodule manodc-types {
     }
   }
 
-  typedef fabric-name {
+  typedef validation-state {
     type enumeration {
-      enum CONTROL {
+      enum enable {
         value 1;
       }
-      enum DATA {
+      enum disable {
         value 2;
       }
-      enum MANAGEMENT {
-        value 3;
+    }
+  }
+
+  typedef action-data-source {
+    type enumeration {
+      enum portal {
+        value 1;
       }
-      enum SERVICE {
-        value 4;
+      enum csv {
+        value 2;
       }
     }
+  }
+
+  typedef uuid {
+    type string {
+      pattern
+        '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-'
+      + '[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
+    }
+    description
+      "A Universally Unique IDentifier in the string representation
+       defined in RFC 4122.  The canonical representation uses
+       lowercase characters.
+
+       The following is an example of a UUID in string representation:
+       f81d4fae-7dec-11d0-a765-00a0c91e6bf6
+      ";
+    reference
+      "RFC 4122: A Universally Unique IDentifier (UUID) URN
+                 Namespace";
   }
 }

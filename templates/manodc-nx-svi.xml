@@ -25,7 +25,12 @@
                 <interface xmlns="http://tail-f.com/ned/cisco-nx">
                     <Vlan>
                         <name>{vlan}</name>
-                        <description>{name}::VLAN{vlan}</description>
+                        <!-- <description>{description}</description> -->
+                        <?if {description}?>
+                            <description>{description}</description>
+                        <?else?>
+                            <description>{name}::VLAN{vlan}</description>
+                        <?end?>
                         <?set-context-node {layer3}?>
                         <vrf>
                             <member>{vrf}</member>

@@ -1,0 +1,59 @@
+stages:
+  - linting
+  - setup
+  - test
+  - teardown
+  - release
+  - deploy
+
+variables:
+  NETSIM_DEVICES: >
+    AVR-NDC1-NFVC-EOR-SW-01:cisco-nx
+    AVR-NDC1-NFVC-EOR-SW-02:cisco-nx
+    AVR-NDC1-NFVC-TOR-SW-01:cisco-nx
+    AVR-NDC1-NFVC-TOR-SW-02:cisco-nx
+    AVR-NDC1-NFVC-TOR-SW-03:cisco-nx
+    AVR-NDC1-NFVC-TOR-SW-04:cisco-nx
+    AVR-NDC1-NFVD-SW-01:cisco-nx
+    AVR-NDC1-NFVD-SW-02:cisco-nx
+    AVR-NDC1-NFVD-SW-03:cisco-nx
+    AVR-NDC1-NFVD-SW-04:cisco-nx
+    AVR-NDC1-NFVD-SW-05:cisco-nx
+    AVR-NDC1-NFVD-SW-06:cisco-nx
+
+include:
+  - project: "olympos-automation-product/devops/cicd-blueprints"
+    ref: "master"
+    file: "/product-ci.yml"
+
+package-linting:
+  stage: linting
+  extends: .python-linting
+
+suite-setup:
+  stage: setup
+  extends: .nso-setup
+  needs:
+    - package-linting
+
+package-test:
+  stage: test
+  extends: .robot-test
+  needs:
+    - suite-setup
+
+nso-release:
+  stage: release
+  extends: .nso-release
+  needs:
+    - package-test
+
+nso-deploy:
+  stage: deploy
+  extends: .nso-deploy
+  needs:
+    - nso-release
+
+suite-teardown:
+  stage: teardown
+  extends: .nso-teardown

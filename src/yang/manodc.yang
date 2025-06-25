@@ -20,12 +20,12 @@ module manodc {
     revision-date "2024-08-22";
   }
 
-  include manodc-site {
-    revision-date 2024-08-21;
-  }
-
   include manodc-bridgedomain {
     revision-date 2024-08-22;
+  }
+
+  include manodc-actions {
+    revision-date 2024-09-12;
   }
 
   description
@@ -92,7 +92,15 @@ module manodc {
         }
       }
 
-      ncs:state "ncs:ready";
+      ncs:state "ncs:ready" {
+        ncs:create {
+          ncs:pre-condition {
+            ncs:monitor "/manodc:bridge-domains/manodc:bridge-domain-vlan-switch-data[manodc:site=$SITE][manodc:name=$BD_NAME][manodc:vlan=$VLAN][manodc:switch=$SWITCH]/plan/component[type='ncs:self'][name='self']/state[name='ncs:ready']" {
+              ncs:trigger-expr "status = 'reached'";
+            }
+          }
+        }
+      }
     }
   }
 
@@ -157,19 +165,23 @@ module manodc {
     }
   }
 
-  container dc-sites {
-    tailf:info "Data center sites configuration";
+  container manodc-actions {
+    uses actions;
 
-    list dc-site {
-      tailf:info "Data center site configuration";
-
-      tailf:callpoint "manodc-site-dp" {
-        tailf:transaction-hook object;
+    list parse-csv-data {
+      tailf:info "parse csv data";
+      config false;
+      tailf:cdb-oper {
+        tailf:persistent true;
       }
 
-      key "location hall fabric";
+      key "timestamp username";
 
-      uses site-configs;
+      unique trace-id;
+
+      uses ncs:plan-data;
+
+      uses parse-csv-data;
     }
   }
 
@@ -229,6 +241,16 @@ module manodc {
       key "site name vlan switch";
 
       uses bridge-domain-vlan-switch;
+    }
+  }
+
+  container manodc-bgworkers {
+    tailf:info "Manodc background workers";
+
+    leaf enabled {
+      tailf:info "Enable or disable manodc background workers";
+      type boolean;
+      default true;
     }
   }
 }

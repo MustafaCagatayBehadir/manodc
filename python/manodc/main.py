@@ -1,12 +1,16 @@
 """Main module for manodc NSO package."""
 
+import multiprocessing
+
 import ncs
 
-from . import dataproviders, services
+from . import actions, background_process, manodc_workers, services, validations
 
 
 class Main(ncs.application.Application):
     """Manodc main class."""
+    nreader = None
+    worker = None
 
     def setup(self):
         """Register services and actions."""
@@ -27,9 +31,28 @@ class Main(ncs.application.Application):
                                    state="manodc:vlan-switch-configured",
                                    nano_service_cls=services.BdVlanSwitchServiceCallback)
 
-        Main.dp = dataproviders.DpApi("manodc-site-dp", self.log)
+        self.register_action(actionpoint="parse-csv", action_cls=actions.ParseCsv)
+
+        self.register_action(actionpoint="manodc-notification-actionpoint", action_cls=actions.SendNotification)
+
+        self.register_action(actionpoint="manodc-allocate-ids", action_cls=actions.AllocateIds)
+
+        self.register_validation("gateway-valpoint", validations.GatewayValidationCallback)  # pylint: disable=no-member
+
+        qbuf = multiprocessing.Manager().Queue()
+        self.nreader = background_process.Process(self,
+                                                  manodc_workers.notif_reader, (qbuf, ),
+                                                  config_path="/manodc:manodc-bgworkers/enabled",
+                                                  run_during_upgrade=True)
+        self.worker = background_process.Process(self,
+                                                 manodc_workers.plan_handler, (qbuf, ),
+                                                 config_path="/manodc:manodc-bgworkers/enabled",
+                                                 run_during_upgrade=True)
+        self.nreader.start()
+        self.worker.start()
 
     def teardown(self):
         """Teardown service and actions."""
-        Main.dp.daemon.finish()
-        self.log.info('Main FINISHED')
+        self.nreader.stop()
+        self.worker.stop()
+        self.log.info("Main FINISHED")

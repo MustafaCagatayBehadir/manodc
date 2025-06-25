@@ -1,0 +1,11 @@
+[tool.commitizen]
+name = "cz_github_jira_conventional"
+tag_format = "$version"
+version_scheme = "pep440"
+version = "1.1.7"
+update_changelog_on_bump = true
+jira_prefix = "TCP-"
+jira_base_url = "https://btsgrp.atlassian.net"
+github_base_url = "https://gitlab.btsgrp.com"
+github_repo = "olympos-automation-product/nso/manodc"
+

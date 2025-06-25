@@ -1,0 +1,142 @@
+submodule manodc-actions {
+
+  belongs-to manodc {
+    prefix "manodc";
+  }
+
+  yang-version 1.1;
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  import tailf-common {
+    prefix tailf;
+  }
+
+  import ietf-yang-types {
+    prefix yang;
+  }
+
+  import tailf-ncs {
+    prefix ncs;
+  }
+
+  import tailf-kicker {
+    prefix kicker;
+  }
+  
+  import inventory-manager {
+    prefix inv;
+  }
+
+  include manodc-types {
+    revision-date "2024-08-22";
+  }
+
+  description
+    "Turkcell MANO DC action module.";
+
+  revision 2024-09-12 {
+    description
+      "Initial revision.";
+  }
+  grouping commit-params {
+    leaf dry-run {
+      type empty;
+    }
+  }
+  grouping actions {
+    tailf:action parse-csv {
+      tailf:info "parse the csv contents";
+      tailf:actionpoint parse-csv;
+      input {
+        leaf data-source {
+          tailf:info "Source of the action data";
+          type action-data-source;
+          default portal;
+        }
+
+        leaf l2l3-data {
+          when "../data-source = 'portal'";
+          tailf:info "L2L3 data as csv string";
+          type string;
+        }
+
+        leaf bd-data {
+          when "../data-source = 'portal'";
+          tailf:info "L2L3 data as csv string";
+          type string;
+        }
+
+        leaf l2l3-data-csv-path {
+          when "../data-source = 'csv'";
+          tailf:info "Path to the l2l3-data csv file";
+          type string;
+        }
+
+        leaf bd-data-csv-path {
+          when "../data-source = 'csv'";
+          tailf:info "Path to the bd-data csv file";
+          type string;
+        }
+
+        leaf trace-id {
+          when "../data-source = 'csv'";
+          tailf:info "Trace id for the action execution";
+          type string;
+        }
+
+        uses commit-params;
+      }
+      output {
+        leaf result {
+          type string;
+        }
+      }
+    }
+
+    tailf:action send-notification-to-odine {
+      tailf:actionpoint manodc-notification-actionpoint;
+      input {
+        uses kicker:action-input-params;
+      }
+    }
+    tailf:action allocate-ids {
+      tailf:info "Get VLAN and VRRPV3 ID's of a site and manually allocate them";
+      tailf:actionpoint manodc-allocate-ids;
+      input {
+        leaf site {
+          tailf:info "Site name that the allocation action will run towards";
+          type leafref {
+            path "/inv:inventory-manager/inv:name";
+          }
+        }
+      }
+      output {
+        leaf result {
+          type string;
+        }
+      }
+    }
+  }
+
+  grouping parse-csv-data {
+
+    leaf timestamp {
+      tailf:info "Timestamp information";
+      type yang:date-and-time;
+    }
+
+    leaf username {
+      tailf:info "Username information";
+      type string;
+    }
+
+    leaf trace-id {
+      tailf:info "Trace id for the action execution";
+      type uuid;
+      mandatory true;
+    }
+  }
+}
